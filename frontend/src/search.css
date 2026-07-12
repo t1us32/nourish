@@ -208,6 +208,7 @@
 
 @keyframes food-screen-enter { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-.content { padding-top: 80px; }
-@media (max-width: 900px) { .content { padding-top: 68px; } }
-@media (max-width: 620px) { .content { padding-top: 42px; } }
+.content { padding-top: 90px; }
+.modal { position: relative; top: 10px; }
+@media (max-width: 900px) { .content { padding-top: 78px; } }
+@media (max-width: 620px) { .content { padding-top: 52px; } }
