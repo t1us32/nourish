@@ -176,6 +176,12 @@ function App() {
       .catch(() => setRecentSearches([]));
   }
 
+  function closeFoodModal() {
+    haptic();
+    setShowScanner(false);
+    setShowModal(false);
+  }
+
   function removeMeal(id) {
     haptic();
     setMeals((currentMeals) => currentMeals.filter((meal) => meal.id !== id));
@@ -234,9 +240,7 @@ function App() {
         horizontalDistance > 70 &&
         Math.abs(horizontalDistance) > Math.abs(verticalDistance)
       ) {
-        haptic();
-        setShowScanner(false);
-        setShowModal(false);
+        closeFoodModal();
       }
       return;
     }
@@ -514,13 +518,32 @@ function App() {
       {showModal && (
         <div className="modal-backdrop">
           <form className="modal" onSubmit={addMeal}>
-            <button
-              type="button"
-              className="close"
-              onClick={() => setShowModal(false)}
-            >
-              <X size={20} />
-            </button>
+            <div className="food-entry-header">
+              {selectedFood ? (
+                <button
+                  type="button"
+                  className="food-entry-back"
+                  onClick={() => {
+                    haptic();
+                    setSelectedFood(null);
+                    setSearch("");
+                  }}
+                >
+                  <ChevronLeft size={19} /> Search
+                </button>
+              ) : (
+                <span className="food-entry-title">Log food</span>
+              )}
+              <button
+                type="button"
+                className="food-entry-close"
+                onClick={closeFoodModal}
+                aria-label="Return to diary"
+              >
+                <X size={18} />
+                <span>Diary</span>
+              </button>
+            </div>
             {pendingFoods.length > 0 && (
               <div className="pending-foods">
                 <strong>Ready to add · {pendingFoods.length}</strong>
