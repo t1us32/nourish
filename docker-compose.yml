@@ -5,6 +5,9 @@ services:
     build: ./backend
     environment:
       FDC_API_KEY: ${FDC_API_KEY:-}
+      SEARCH_HISTORY_PATH: /data/recent-searches.json
+    volumes:
+      - nourish_data:/data
     restart: unless-stopped
 
   web:
@@ -30,3 +33,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  nourish_data:

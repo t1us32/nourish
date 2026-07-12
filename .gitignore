@@ -1,4 +1,5 @@
 backend/.env
+backend/recent-searches.json
 backend/__pycache__/
 frontend/node_modules/
 frontend/dist/

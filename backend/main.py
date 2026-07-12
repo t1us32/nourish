@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -19,7 +20,18 @@ class Meal(BaseModel):
     fat: int = 0
     carbs: int = 0
 
+class SearchHistoryItem(BaseModel):
+    query: str
+
 meals: list[Meal] = []
+search_history_path = Path(os.getenv("SEARCH_HISTORY_PATH", "recent-searches.json"))
+
+try:
+    recent_searches = json.loads(search_history_path.read_text())
+    if not isinstance(recent_searches, list) or not all(isinstance(item, str) for item in recent_searches):
+        recent_searches = []
+except (OSError, json.JSONDecodeError):
+    recent_searches = []
 
 def open_food_facts_food(product: dict, fallback_code: str):
     nutriments = product.get("nutriments", {})
@@ -63,6 +75,25 @@ def create_meal(meal: Meal):
     meals.append(meal)
     return meal
 
+@app.get("/foods/recent-searches")
+def list_recent_searches():
+    return {"searches": recent_searches}
+
+@app.post("/foods/recent-searches")
+def save_recent_search(item: SearchHistoryItem):
+    query = " ".join(item.query.split())[:100]
+    if len(query) < 2:
+        raise HTTPException(status_code=400, detail="Search text must be at least 2 characters.")
+    recent_searches[:] = [saved for saved in recent_searches if saved.casefold() != query.casefold()]
+    recent_searches.insert(0, query)
+    del recent_searches[8:]
+    try:
+        search_history_path.parent.mkdir(parents=True, exist_ok=True)
+        search_history_path.write_text(json.dumps(recent_searches))
+    except OSError as error:
+        raise HTTPException(status_code=500, detail="Could not save recent searches.") from error
+    return {"searches": recent_searches}
+
 @app.get("/foods/barcode/{code}")
 def get_food_by_barcode(code: str):
     if not code.isdigit() or not 8 <= len(code) <= 14:
@@ -79,21 +110,18 @@ def search_foods(query: str = Query(min_length=2, max_length=100)):
                 raise
 
     api_key = os.getenv("FDC_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=503, detail="Food search is not configured.")
+    foods = []
+    if api_key:
+        params = urlencode({"api_key": api_key, "query": query, "pageSize": 10})
+        try:
+            with urlopen(f"https://api.nal.usda.gov/fdc/v1/foods/search?{params}", timeout=10) as response:
+                foods = json.load(response).get("foods", [])
+        except Exception:
+            pass
 
-    params = urlencode({"api_key": api_key, "query": query, "pageSize": 10})
-    try:
-        with urlopen(f"https://api.nal.usda.gov/fdc/v1/foods/search?{params}", timeout=10) as response:
-            data = json.load(response)
-    except Exception as error:
-        raise HTTPException(status_code=502, detail="Food search is temporarily unavailable.") from error
-
-    foods = data.get("foods", [])
-
-    # USDA's catalog is primarily English. Open Food Facts includes product names
-    # contributed in Ukrainian and Russian, so use it for Cyrillic text queries.
-    if re.search(r"[\u0400-\u052F]", query):
+    # Open Food Facts keeps search available when USDA is not configured and
+    # improves coverage for international products.
+    if not foods or re.search(r"[\u0400-\u052F]", query):
         search_params = urlencode({"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 10})
         request = Request(
             f"https://world.openfoodfacts.org/cgi/search.pl?{search_params}",
