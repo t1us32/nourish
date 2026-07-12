@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Bell, ChevronDown, ChevronLeft, ChevronRight, Droplets, Flame, Plus, ScanBarcode, Trash2, Utensils, X } from 'lucide-react';
+import { Bell, ChevronDown, ChevronLeft, ChevronRight, Flame, Plus, ScanBarcode, Trash2, Utensils, X } from 'lucide-react';
 import './styles.css';
 import './search.css';
 
@@ -25,7 +25,6 @@ function App() {
   const [searchingFoods, setSearchingFoods] = useState(false);
   const [foodSearchError, setFoodSearchError] = useState('');
   const [pendingFoods, setPendingFoods] = useState([]);
-  const [waterByDate, setWaterByDate] = useState(() => JSON.parse(localStorage.getItem('nourish-water') || '{}'));
   const [isLoading, setIsLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
   const touchStart = useRef(null);
@@ -40,35 +39,15 @@ function App() {
   }), { calories: 0, protein: 0, fat: 0, carbs: 0 });
   const remaining = Math.max(goals.calories - totals.calories, 0);
   const percent = Math.min((totals.calories / goals.calories) * 100, 100);
-  const water = waterByDate[selectedDate] || 0;
   const animatedCalories = useAnimatedNumber(totals.calories);
   const animatedProtein = useAnimatedNumber(totals.protein);
   const animatedFat = useAnimatedNumber(totals.fat);
   const animatedCarbs = useAnimatedNumber(totals.carbs);
   const animatedRemaining = useAnimatedNumber(remaining);
-  const animatedWater = useAnimatedNumber(water);
-  const week = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(`${today}T12:00:00`);
-    date.setDate(date.getDate() - 6 + index);
-    const key = date.toISOString().slice(0, 10);
-    return { key, label: date.toLocaleDateString('en-US', { weekday: 'narrow' }), logged: meals.some(meal => meal.date === key) };
-  });
-  let streak = 0;
-  for (let offset = 0; ; offset += 1) {
-    const date = new Date(`${today}T12:00:00`);
-    date.setDate(date.getDate() - offset);
-    if (!meals.some(meal => meal.date === date.toISOString().slice(0, 10))) break;
-    streak += 1;
-  }
-  const animatedStreak = useAnimatedNumber(streak);
 
   useEffect(() => {
     localStorage.setItem('nourish-meals', JSON.stringify(meals));
   }, [meals]);
-
-  useEffect(() => {
-    localStorage.setItem('nourish-water', JSON.stringify(waterByDate));
-  }, [waterByDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
@@ -245,7 +224,6 @@ function App() {
       </div></section>
 
       <section className="food-section"><div className="section-top"><div><p className="section-label">{isToday ? "TODAY'S LOG" : 'DAILY LOG'}</p><h2>Recent meals</h2></div><button className="text-button" onClick={openFoodModal}>Add meal <span>+</span></button></div><div className="meal-list">{displayedMeals.length ? displayedMeals.map(meal => <div className="meal" key={meal.id}><span className={`meal-icon ${meal.tone}`}>{meal.icon}</span><div className="meal-name"><b>{meal.name}</b><small>{meal.detail}</small></div><div className="meal-macro"><b>{meal.protein}g</b><span>protein</span></div><div className="meal-macro"><b>{meal.carbs}g</b><span>carbs</span></div><strong className="meal-calories">{meal.calories}<small> kcal</small></strong><button className="delete-meal" onClick={() => removeMeal(meal.id)} aria-label={`Remove ${meal.name}`}><Trash2 size={15}/></button></div>) : <div className="empty-log"><Utensils size={22}/><b>No meals logged</b><span>Add your first meal for this day.</span><button className="text-button" onClick={openFoodModal}>Log food <span>+</span></button></div>}</div></section>
-      <section className="wellness-strip"><article className="water-card"><div><span><Droplets size={16} fill="currentColor"/> Water</span><b>{animatedWater}<small>/8</small></b></div><div className="water-dots">{Array.from({ length: 8 }, (_, index) => <button key={index} className={index < water ? 'filled' : ''} onClick={() => { haptic(8); setWaterByDate({ ...waterByDate, [selectedDate]: index < water ? index : index + 1 }); }} aria-label={`${index + 1} glasses`} />)}</div></article><article className="streak-card"><div><span>Streak</span><b>{animatedStreak}<small> days</small></b></div><div className="week-strip">{week.map(day => <span className={day.logged ? 'done' : ''} key={day.key}><i>{day.label}</i></span>)}</div></article></section>
       </>}
     </section>
     {showModal && <div className="modal-backdrop"><form className="modal" onSubmit={addMeal}><button type="button" className="close" onClick={() => setShowModal(false)}><X size={20}/></button><p className="section-label">QUICK LOG</p><h2>Add food</h2>{pendingFoods.length > 0 && <div className="pending-foods"><strong>Ready to add · {pendingFoods.length}</strong>{pendingFoods.map(food => <div key={food.id}><span>{food.name}</span><small>{food.detail}</small><button type="button" onClick={() => setPendingFoods(pendingFoods.filter(item => item.id !== food.id))}>Remove</button></div>)}</div>}{!selectedFood ? <><label>Search foods or enter a barcode<input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Chicken, курка, курица, or 482..." /></label>{(searchingFoods || foodResults.length > 0) && <div className="food-results">{searchingFoods && <span>Searching foods...</span>}{foodResults.map(food => <button type="button" key={food.fdcId} onClick={() => selectFood(food)}><b>{food.description}</b><small>{food.brandOwner || food.dataType} · {Math.round((food.foodNutrients || []).find(nutrient => nutrient.nutrientName === 'Energy')?.value || 0)} kcal{String(food.fdcId).startsWith('off-') ? ' · per 100g' : ''}</small></button>)}</div>}{pendingFoods.length > 0 && <button className="add-button submit"><Plus size={18}/> Add to today</button>}</> : <><div className="selected-food"><b>{selectedFood.description}</b><button type="button" onClick={() => { setSelectedFood(null); setSearch(''); }}>Change</button></div><label className="amount-label">Amount<div className="amount-control"><button type="button" onClick={() => setAmount(Math.max(1, Number(amount) - 10))}>−</button><input type="number" min="1" step="1" value={amount} onChange={e => setAmount(e.target.value)} /><span>g</span><button type="button" onClick={() => setAmount(Number(amount) + 10)}>+</button></div></label><div className="log-actions"><button type="button" className="add-more" onClick={addMore}>Add more</button><button className="add-button submit"><Plus size={18}/> Add to today</button></div></>}</form></div>}
