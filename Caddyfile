@@ -1,0 +1,8 @@
+{
+    # Port 80 belongs to an existing service, so validate certificates over TLS on port 443.
+    auto_https disable_redirects
+}
+
+resonmusic.pp.ua {
+    reverse_proxy web:80
+}

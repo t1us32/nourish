@@ -14,3 +14,19 @@ services:
     ports:
       - "${NOURISH_PORT:-8080}:80"
     restart: unless-stopped
+
+  https:
+    image: caddy:2.8-alpine
+    depends_on:
+      - web
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

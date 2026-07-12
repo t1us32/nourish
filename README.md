@@ -9,6 +9,10 @@
 
 Open `http://SERVER_IP:8080`. The API is only available through the web container at `/api`.
 
+## HTTPS
+
+The Compose stack serves `https://resonmusic.pp.ua` through Caddy on port `443`. Point that domain's DNS A record to this server and allow inbound TCP port `443`. Port `80` remains untouched because it is used by another service.
+
 ## Ubuntu system service
 
 From the checked-out repository, run:
