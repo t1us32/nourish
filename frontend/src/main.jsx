@@ -6,8 +6,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Moon,
   Plus,
   ScanBarcode,
+  Sun,
   Trash2,
   Utensils,
   X,
@@ -41,6 +43,13 @@ function App() {
   const [pendingFoods, setPendingFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("nourish-theme");
+    if (savedTheme) return savedTheme;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
   const touchStart = useRef(null);
   const displayedMeals = meals.filter((meal) => meal.date === selectedDate);
   const displayDate = new Date(`${selectedDate}T12:00:00`);
@@ -73,12 +82,15 @@ function App() {
 
   useEffect(() => {
     const themeColor = document.querySelector('meta[name="theme-color"]');
-    if (!themeColor) return;
-    themeColor.content = "#f5f7fb";
-    return () => {
-      themeColor.content = "#f5f7fb";
-    };
-  }, [showModal]);
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("nourish-theme", theme);
+    if (themeColor) themeColor.content = theme === "dark" ? "#101827" : "#f5f7fb";
+  }, [theme]);
+
+  function toggleTheme() {
+    haptic();
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  }
 
   useEffect(() => {
     if (!showModal || selectedFood || search.trim().length < 2) {
@@ -290,7 +302,10 @@ function App() {
 
       <section className="content" id="today">
         <div className="mobile-app-header">
-          <div className="mobile-appbar" aria-hidden="true" />
+          <div className="mobile-appbar">
+            <span className="mobile-app-title">Diary</span>
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          </div>
           <div className="day-picker">
             <button aria-label="Previous day" onClick={() => changeDay(-1)}>
               <ChevronLeft size={19} />
@@ -340,6 +355,7 @@ function App() {
                 </p>
               </div>
               <div className="header-actions">
+                <ThemeToggle theme={theme} onToggle={toggleTheme} />
                 <button className="circle-button">
                   <Bell size={19} />
                   <i />
@@ -695,6 +711,21 @@ function App() {
         />
       )}
     </main>
+  );
+}
+
+function ThemeToggle({ theme, onToggle }) {
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      className="circle-button theme-toggle"
+      onClick={onToggle}
+      aria-label={isDark ? "Use light theme" : "Use dark theme"}
+      aria-pressed={isDark}
+    >
+      {isDark ? <Sun size={19} /> : <Moon size={18} />}
+    </button>
   );
 }
 
