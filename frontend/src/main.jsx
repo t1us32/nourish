@@ -216,12 +216,13 @@ function App() {
   }
 
   function useScannedBarcode(code) {
+    const normalizedCode = String(code).trim();
     haptic(20);
-    setSearch(code);
+    setSearch(normalizedCode);
     setShowScanner(false);
     setSearchingFoods(true);
     setFoodSearchError("");
-    fetch(`/api/foods/barcode/${encodeURIComponent(code)}`)
+    fetch(`/api/foods/barcode/${encodeURIComponent(normalizedCode)}`)
       .then(async (response) => {
         if (!response.ok)
           throw new Error(

@@ -62,6 +62,18 @@ def lookup_barcode(code: str):
         raise HTTPException(status_code=404, detail="No food was found for this barcode.")
     return open_food_facts_food(product, code)
 
+def search_by_barcode(code: str):
+    try:
+        return lookup_barcode(code)
+    except HTTPException as error:
+        if error.status_code != 404:
+            raise
+
+    foods = search_foods(query=code)["foods"]
+    if foods:
+        return foods[0]
+    raise HTTPException(status_code=404, detail="No food was found for this barcode.")
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -98,13 +110,13 @@ def save_recent_search(item: SearchHistoryItem):
 def get_food_by_barcode(code: str):
     if not code.isdigit() or not 8 <= len(code) <= 14:
         raise HTTPException(status_code=400, detail="Enter a valid 8 to 14 digit barcode.")
-    return {"food": lookup_barcode(code)}
+    return {"food": search_by_barcode(code)}
 
 @app.get("/foods/search")
 def search_foods(query: str = Query(min_length=2, max_length=100)):
     if query.isdigit() and 8 <= len(query) <= 14:
         try:
-            return {"foods": [lookup_barcode(query)]}
+            return {"foods": [search_by_barcode(query)]}
         except HTTPException as error:
             if error.status_code != 404:
                 raise
