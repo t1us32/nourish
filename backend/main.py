@@ -62,6 +62,19 @@ def lookup_barcode(code: str):
         raise HTTPException(status_code=404, detail="No food was found for this barcode.")
     return open_food_facts_food(product, code)
 
+def open_food_facts_search(query: str):
+    search_params = urlencode({"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 10})
+    request = Request(
+        f"https://world.openfoodfacts.org/cgi/search.pl?{search_params}",
+        headers={"User-Agent": "Nourish/1.0 (local nutrition tracker)"}
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            product_data = json.load(response)
+        return [open_food_facts_food(product, query) for product in product_data.get("products", [])]
+    except Exception:
+        return []
+
 def search_by_barcode(code: str):
     try:
         return lookup_barcode(code)
@@ -69,7 +82,7 @@ def search_by_barcode(code: str):
         if error.status_code != 404:
             raise
 
-    foods = search_foods(query=code)["foods"]
+    foods = open_food_facts_search(code)
     if foods:
         return foods[0]
     raise HTTPException(status_code=404, detail="No food was found for this barcode.")
@@ -134,16 +147,6 @@ def search_foods(query: str = Query(min_length=2, max_length=100)):
     # Open Food Facts keeps search available when USDA is not configured and
     # improves coverage for international products.
     if not foods or re.search(r"[\u0400-\u052F]", query):
-        search_params = urlencode({"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 10})
-        request = Request(
-            f"https://world.openfoodfacts.org/cgi/search.pl?{search_params}",
-            headers={"User-Agent": "Nourish/1.0 (local nutrition tracker)"}
-        )
-        try:
-            with urlopen(request, timeout=10) as response:
-                product_data = json.load(response)
-            foods = [open_food_facts_food(product, query) for product in product_data.get("products", [])] + foods
-        except Exception:
-            pass
+        foods = open_food_facts_search(query) + foods
 
     return {"foods": foods}
