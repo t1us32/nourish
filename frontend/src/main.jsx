@@ -229,6 +229,21 @@ function App() {
           code: normalizedCode,
           status: response.status,
         });
+        if (response.status === 404) {
+          console.warn("barcode.scan fallback to search", { code: normalizedCode });
+          const searchResponse = await fetch(
+            `/api/foods/search?query=${encodeURIComponent(normalizedCode)}`,
+          );
+          const searchData = await searchResponse.json();
+          console.log("barcode.scan search response", {
+            code: normalizedCode,
+            status: searchResponse.status,
+            count: searchData.foods?.length || 0,
+          });
+          if (!searchResponse.ok || !searchData.foods?.length)
+            throw new Error(searchData.detail || "Barcode lookup failed.");
+          return { food: searchData.foods[0] };
+        }
         if (!response.ok)
           throw new Error(
             (await response.json()).detail || "Barcode lookup failed.",
