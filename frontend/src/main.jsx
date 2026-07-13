@@ -240,8 +240,14 @@ function App() {
             status: searchResponse.status,
             count: searchData.foods?.length || 0,
           });
-          if (!searchResponse.ok || !searchData.foods?.length)
+          if (!searchResponse.ok || !searchData.foods?.length) {
+            console.error("barcode.scan fallback empty", {
+              code: normalizedCode,
+              status: searchResponse.status,
+              detail: searchData.detail,
+            });
             throw new Error(searchData.detail || "Barcode lookup failed.");
+          }
           return { food: searchData.foods[0] };
         }
         if (!response.ok)

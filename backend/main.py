@@ -26,6 +26,10 @@ class SearchHistoryItem(BaseModel):
 meals: list[Meal] = []
 search_history_path = Path(os.getenv("SEARCH_HISTORY_PATH", "recent-searches.json"))
 
+
+def log(message: str):
+    print(message, flush=True)
+
 try:
     recent_searches = json.loads(search_history_path.read_text())
     if not isinstance(recent_searches, list) or not all(isinstance(item, str) for item in recent_searches):
@@ -49,24 +53,25 @@ def open_food_facts_food(product: dict, fallback_code: str):
     }
 
 def lookup_barcode(code: str):
-    print(f"barcode.lookup start code={code}")
+    log(f"barcode.lookup start code={code}")
     product_url = f"https://world.openfoodfacts.org/api/v2/product/{code}.json?fields=code,product_name,product_name_uk,product_name_ru,generic_name,brands,nutriments"
     request = Request(product_url, headers={"User-Agent": "Nourish/1.0 (local nutrition tracker)"})
     try:
         with urlopen(request, timeout=10) as response:
             product_data = json.load(response)
     except Exception as error:
+        log(f"barcode.lookup error code={code} error={type(error).__name__}: {error}")
         raise HTTPException(status_code=502, detail="Barcode lookup is temporarily unavailable.") from error
 
     product = product_data.get("product", {})
     if product_data.get("status") != 1 or not product:
-        print(f"barcode.lookup miss code={code}")
+        log(f"barcode.lookup miss code={code}")
         raise HTTPException(status_code=404, detail="No food was found for this barcode.")
-    print(f"barcode.lookup hit code={code} name={product.get('product_name') or product.get('generic_name') or code}")
+    log(f"barcode.lookup hit code={code} name={product.get('product_name') or product.get('generic_name') or code}")
     return open_food_facts_food(product, code)
 
 def open_food_facts_search(query: str):
-    print(f"barcode.off_search start query={query}")
+    log(f"barcode.off_search start query={query}")
     search_params = urlencode({"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 10})
     request = Request(
         f"https://world.openfoodfacts.org/cgi/search.pl?{search_params}",
@@ -76,26 +81,26 @@ def open_food_facts_search(query: str):
         with urlopen(request, timeout=10) as response:
             product_data = json.load(response)
         foods = [open_food_facts_food(product, query) for product in product_data.get("products", [])]
-        print(f"barcode.off_search done query={query} count={len(foods)}")
+        log(f"barcode.off_search done query={query} count={len(foods)}")
         return foods
-    except Exception:
-        print(f"barcode.off_search error query={query}")
+    except Exception as error:
+        log(f"barcode.off_search error query={query} error={type(error).__name__}: {error}")
         return []
 
 def search_by_barcode(code: str):
-    print(f"barcode.search start code={code}")
+    log(f"barcode.search start code={code}")
     try:
         return lookup_barcode(code)
     except HTTPException as error:
         if error.status_code != 404:
-            print(f"barcode.search error code={code} status={error.status_code}")
+            log(f"barcode.search error code={code} status={error.status_code}")
             raise
 
     foods = open_food_facts_search(code)
     if foods:
-        print(f"barcode.search fallback_hit code={code} name={foods[0].get('description')}")
+        log(f"barcode.search fallback_hit code={code} name={foods[0].get('description')}")
         return foods[0]
-    print(f"barcode.search not_found code={code}")
+    log(f"barcode.search not_found code={code}")
     raise HTTPException(status_code=404, detail="No food was found for this barcode.")
 
 @app.get("/health")
