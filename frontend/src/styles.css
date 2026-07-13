@@ -38,6 +38,38 @@
 :root[data-theme="dark"] .food-entry-title { color: #edf3ff; }
 :root[data-theme="dark"] .food-entry-close { color: #aab9d2; }
 
+/* Dark theme uses layered navy surfaces so controls and logged meals remain distinct. */
+:root[data-theme="dark"] body { background: radial-gradient(circle at 78% -15%, #1b3560 0, #101827 36%, #0d1422 100%); }
+:root[data-theme="dark"] .sidebar { background: #101a2b; border-color: #263651; }
+:root[data-theme="dark"] .calorie-card, :root[data-theme="dark"] .macro-card, :root[data-theme="dark"] .meal-list, :root[data-theme="dark"] .meal, :root[data-theme="dark"] .empty-log, :root[data-theme="dark"] .day-picker { background: #162237; border-color: #2a3b59; box-shadow: 0 14px 32px rgba(3, 10, 24, .2); }
+:root[data-theme="dark"] .calorie-card { background: linear-gradient(145deg, #192942, #141f33); }
+:root[data-theme="dark"] .macro-card:hover, :root[data-theme="dark"] .meal:hover, :root[data-theme="dark"] .day-picker:hover { border-color: #40618f; background-color: #1a2a43; }
+:root[data-theme="dark"] .circle-button, :root[data-theme="dark"] .day-picker button { background: #1b2d49; border: 1px solid #304664; box-shadow: 0 7px 18px rgba(3, 10, 24, .22); }
+:root[data-theme="dark"] .add-button { background: linear-gradient(135deg, #4b82f5, #3267d5); box-shadow: 0 9px 20px rgba(28, 86, 207, .3); }
+:root[data-theme="dark"] .add-button:hover { filter: brightness(1.12); }
+:root[data-theme="dark"] .purple { color: #b8a8ff; background: #2b2751; }
+:root[data-theme="dark"] .coral { color: #ffac9e; background: #4a2931; }
+:root[data-theme="dark"] .gold { color: #ffd37a; background: #49391f; }
+:root[data-theme="dark"] .lavender { background: #2c2850; }
+:root[data-theme="dark"] .mint { background: #173c3b; }
+:root[data-theme="dark"] .peach { background: #49302c; }
+:root[data-theme="dark"] .sky { background: #1c385a; }
+:root[data-theme="dark"] .blue-dot { background: #6d9cff; box-shadow: 0 0 0 4px rgba(109, 156, 255, .12); }
+:root[data-theme="dark"] .pale-dot { background: #526d98; }
+:root[data-theme="dark"] .quote-card { background: linear-gradient(145deg, #386fd9, #244b9b); box-shadow: 0 16px 35px rgba(3, 10, 24, .24); }
+:root[data-theme="dark"] .modal { background: #162237; box-shadow: 0 28px 70px rgba(0, 0, 0, .48); }
+:root[data-theme="dark"] .food-search-error { color: #ffaaa5; }
+:root[data-theme="dark"] .delete-meal { color: #95a9ca; }
+:root[data-theme="dark"] .delete-meal:hover { color: #ffaaa5; background: #3d2832; border-radius: 8px; }
+
+.empty-log-actions { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+.empty-log-actions .add-button { justify-content: center; padding: 10px 13px; }
+.empty-scan-button { display: inline-flex; align-items: center; gap: 6px; padding: 10px 11px; border: 1px solid #cfdbef; border-radius: 10px; background: #fff; color: #3f6198; font-size: 12px; font-weight: 700; transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease; }
+.empty-scan-button:hover { border-color: #9ebcf2; background: #edf4ff; }
+.empty-scan-button:active { transform: scale(.97); }
+:root[data-theme="dark"] .empty-scan-button { border-color: #3d5d8c; background: #1a2a43; color: #a9c6ff; }
+:root[data-theme="dark"] .empty-scan-button:hover { border-color: #557bb5; background: #203756; }
+
 @media(max-width:620px){
   :root[data-theme="dark"] body, :root[data-theme="dark"] .modal-backdrop { background: #101827; }
 }

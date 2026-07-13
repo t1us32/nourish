@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Bell,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -43,6 +44,7 @@ function App() {
   const [pendingFoods, setPendingFoods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
+  const [loggedNotice, setLoggedNotice] = useState("");
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("nourish-theme");
     if (savedTheme) return savedTheme;
@@ -79,6 +81,12 @@ function App() {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!loggedNotice) return undefined;
+    const timer = setTimeout(() => setLoggedNotice(""), 2600);
+    return () => clearTimeout(timer);
+  }, [loggedNotice]);
 
   useEffect(() => {
     const themeColor = document.querySelector('meta[name="theme-color"]');
@@ -157,6 +165,9 @@ function App() {
     if (!foodsToLog.length) return;
     haptic(18);
     setMeals((currentMeals) => [...currentMeals, ...foodsToLog]);
+    setLoggedNotice(
+      `${foodsToLog.length} ${foodsToLog.length === 1 ? "food" : "foods"} added to your log`,
+    );
     setSearch("");
     setSelectedFood(null);
     setAmount(100);
@@ -431,20 +442,6 @@ function App() {
                     </div>
                   </div>
                 </div>
-                <div className="goal-line">
-                  <span>Daily goal</span>
-                  <strong>
-                    {animatedCalories.toLocaleString()} <i>/</i>{" "}
-                    {goals.calories.toLocaleString()} kcal
-                  </strong>
-                </div>
-                <div className="bar">
-                  <i
-                    key={totals.calories}
-                    className="fill-line"
-                    style={{ "--fill": `${percent}%` }}
-                  />
-                </div>
               </div>
               <div className="quote-card">
                 <div className="quote-art">
@@ -549,9 +546,20 @@ function App() {
                     <Utensils size={22} />
                     <b>No meals logged</b>
                     <span>Add your first meal for this day.</span>
-                    <button className="text-button" onClick={openFoodModal}>
-                      Log food <span>+</span>
-                    </button>
+                    <div className="empty-log-actions">
+                      <button className="add-button" onClick={openFoodModal}>
+                        <Plus size={17} /> Log your first food
+                      </button>
+                      <button
+                        className="empty-scan-button"
+                        onClick={() => {
+                          openFoodModal();
+                          setShowScanner(true);
+                        }}
+                      >
+                        <ScanBarcode size={17} /> Scan barcode
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -716,6 +724,23 @@ function App() {
                     </button>
                   </div>
                 </label>
+                <div className="portion-presets" aria-label="Quick portion sizes">
+                  <span>Quick add</span>
+                  {[50, 100, 150, 200].map((grams) => (
+                    <button
+                      type="button"
+                      className={Number(amount) === grams ? "active" : ""}
+                      key={grams}
+                      onClick={() => {
+                        haptic();
+                        setAmount(grams);
+                      }}
+                    >
+                      {grams}g
+                    </button>
+                  ))}
+                </div>
+                <FoodPreview food={selectedFood} amount={amount} />
                 <div className="log-actions">
                   <button type="button" className="add-more" onClick={addMore}>
                     Add more
@@ -738,7 +763,30 @@ function App() {
           onClose={() => setShowScanner(false)}
         />
       )}
+      {loggedNotice && (
+        <div className="log-notice" role="status">
+          <Check size={16} /> {loggedNotice}
+        </div>
+      )}
     </main>
+  );
+}
+
+function FoodPreview({ food, amount }) {
+  const nutrients = food.foodNutrients || [];
+  const valueFor = (name) =>
+    nutrients.find((nutrient) => nutrient.nutrientName === name)?.value || 0;
+  const multiplier = Number(amount) / 100;
+  const calories = Math.round(valueFor("Energy") * multiplier);
+  const protein = Math.round(valueFor("Protein") * multiplier);
+  const carbs = Math.round(valueFor("Carbohydrate, by difference") * multiplier);
+
+  return (
+    <div className="food-preview" aria-label="Nutrition for selected amount">
+      <strong>{calories} kcal</strong>
+      <span>{protein}g protein</span>
+      <span>{carbs}g carbs</span>
+    </div>
   );
 }
 
