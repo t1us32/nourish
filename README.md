@@ -4,10 +4,10 @@
 
 1. Install Docker Engine with the Docker Compose plugin on the server.
 2. Clone this repository and change into its directory.
-3. Optionally export `FDC_API_KEY` for USDA text search and `NOURISH_PORT` to use a port other than `8080`.
+3. Optionally export `FDC_API_KEY` for USDA text search.
 4. Run `docker compose up -d --build`.
 
-Open `http://SERVER_IP:8080`. The API is only available through the web container at `/api`.
+Open `https://resonmusic.pp.ua` for the deployed VPS stack. The API is only available through the web container at `/api`.
 
 ## HTTPS
 
