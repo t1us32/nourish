@@ -7,11 +7,7 @@
 3. Optionally export `FDC_API_KEY` for USDA text search.
 4. Run `docker compose up -d --build`.
 
-Open `https://resonmusic.pp.ua` for the deployed VPS stack. The API is only available through the web container at `/api`.
-
-## HTTPS
-
-The Compose stack serves `https://resonmusic.pp.ua` through Caddy on port `443`. Point that domain's DNS A record to this server and allow inbound TCP port `443`. Port `80` remains untouched because it is used by another service.
+Open `http://SERVER_IP:8080`. The API is only available through the web container at `/api`.
 
 ## Ubuntu system service
 
