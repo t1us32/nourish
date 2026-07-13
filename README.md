@@ -11,6 +11,12 @@ Open `https://resonmusic.pp.ua`. The API is only available through the web conta
 
 Port 443 must be free on the server for the HTTPS gateway.
 
+To verify the proxy from the VPS, run `curl -I https://resonmusic.pp.ua/api/health`.
+
+## Home network dev
+
+Run `npm run dev` from `frontend/` and open `https://YOUR_PC_LAN_IP:5173` from other devices on your Wi-Fi.
+
 ## Ubuntu system service
 
 From the checked-out repository, run:
