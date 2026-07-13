@@ -49,6 +49,7 @@ def open_food_facts_food(product: dict, fallback_code: str):
     }
 
 def lookup_barcode(code: str):
+    print(f"barcode.lookup start code={code}")
     product_url = f"https://world.openfoodfacts.org/api/v2/product/{code}.json?fields=code,product_name,product_name_uk,product_name_ru,generic_name,brands,nutriments"
     request = Request(product_url, headers={"User-Agent": "Nourish/1.0 (local nutrition tracker)"})
     try:
@@ -59,10 +60,13 @@ def lookup_barcode(code: str):
 
     product = product_data.get("product", {})
     if product_data.get("status") != 1 or not product:
+        print(f"barcode.lookup miss code={code}")
         raise HTTPException(status_code=404, detail="No food was found for this barcode.")
+    print(f"barcode.lookup hit code={code} name={product.get('product_name') or product.get('generic_name') or code}")
     return open_food_facts_food(product, code)
 
 def open_food_facts_search(query: str):
+    print(f"barcode.off_search start query={query}")
     search_params = urlencode({"search_terms": query, "search_simple": 1, "action": "process", "json": 1, "page_size": 10})
     request = Request(
         f"https://world.openfoodfacts.org/cgi/search.pl?{search_params}",
@@ -71,20 +75,27 @@ def open_food_facts_search(query: str):
     try:
         with urlopen(request, timeout=10) as response:
             product_data = json.load(response)
-        return [open_food_facts_food(product, query) for product in product_data.get("products", [])]
+        foods = [open_food_facts_food(product, query) for product in product_data.get("products", [])]
+        print(f"barcode.off_search done query={query} count={len(foods)}")
+        return foods
     except Exception:
+        print(f"barcode.off_search error query={query}")
         return []
 
 def search_by_barcode(code: str):
+    print(f"barcode.search start code={code}")
     try:
         return lookup_barcode(code)
     except HTTPException as error:
         if error.status_code != 404:
+            print(f"barcode.search error code={code} status={error.status_code}")
             raise
 
     foods = open_food_facts_search(code)
     if foods:
+        print(f"barcode.search fallback_hit code={code} name={foods[0].get('description')}")
         return foods[0]
+    print(f"barcode.search not_found code={code}")
     raise HTTPException(status_code=404, detail="No food was found for this barcode.")
 
 @app.get("/health")

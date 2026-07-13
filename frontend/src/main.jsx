@@ -217,6 +217,7 @@ function App() {
 
   function useScannedBarcode(code) {
     const normalizedCode = String(code).trim();
+    console.log("barcode.scan start", { code: normalizedCode });
     haptic(20);
     setSearch(normalizedCode);
     setShowScanner(false);
@@ -224,6 +225,10 @@ function App() {
     setFoodSearchError("");
     fetch(`/api/foods/barcode/${encodeURIComponent(normalizedCode)}`)
       .then(async (response) => {
+        console.log("barcode.scan response", {
+          code: normalizedCode,
+          status: response.status,
+        });
         if (!response.ok)
           throw new Error(
             (await response.json()).detail || "Barcode lookup failed.",
@@ -231,9 +236,10 @@ function App() {
         return response.json();
       })
       .then((data) => selectFood(data.food))
-      .catch((error) =>
-        setFoodSearchError(error.message || "Barcode lookup failed."),
-      )
+      .catch((error) => {
+        console.error("barcode.scan error", { code: normalizedCode, error });
+        setFoodSearchError(error.message || "Barcode lookup failed.");
+      })
       .finally(() => setSearchingFoods(false));
   }
 
