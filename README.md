@@ -7,7 +7,9 @@
 3. Optionally export `FDC_API_KEY` for USDA text search.
 4. Run `docker compose up -d --build`.
 
-Open `http://SERVER_IP:8081`. The API is only available through the web container at `/api`.
+Open `https://resonmusic.pp.ua`. The API is only available through the web container at `/api`.
+
+Port 443 must be free on the server for the HTTPS gateway.
 
 ## Ubuntu system service
 
